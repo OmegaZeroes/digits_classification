@@ -203,7 +203,8 @@ def test()-> None:
 
 def plot_confusion_matrix() -> None:
     print("<--- Plot Confusion Matrix (TEST SET) --->")
-
+    with open('model.pth', 'rb') as f:
+        model.load_state_dict(torch.load(f))
     model.eval()
     all_preds = []
     all_true = []
