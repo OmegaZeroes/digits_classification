@@ -43,8 +43,4 @@ pip install -r requirement.txt
 ```
 
 ## Cách chạy huấn luyện và đánh giá mô hình
-Chạy trainer.py:
-```python
-python3 trainer.py
-#Nếu báo lỗi thì dùng py, hoặc python thay vì python3
-```
+Đầu tiên, ở dưới cùng file trainer.py. Tất các các hàm được bật (Xem từng chức năng của hàm, ko cần hàm nào thì comment hàm đó)
