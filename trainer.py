@@ -12,6 +12,7 @@ import torch.nn as nn
 import torch.optim as optim
 from save_samples import testImage
 from torchmetrics.classification import MulticlassPrecision, MulticlassRecall, MulticlassF1Score
+from src.models.model import MLP, DigitsClassifier, EarlyStopping
 config = OmegaConf.load("./configs/config.yaml")
 collator = DataCollator()
 train_dataset, val_dataset, test_dataset,total_size = getDataSet(config.data.root_dir)
@@ -45,6 +46,8 @@ loaders = {
 #TODO: Define device to train on, loss function, optimizer.
 #TODO: Initialize the model, and load configs(learning rate and epochs) 
 
+early_stopping = EarlyStopping(patience=5, verbose=True)
+
 epochs = config.trainer.epochs
 
 learning_rate = config.trainer.learning_rate
@@ -60,15 +63,8 @@ f1_metric = MulticlassF1Score(**metric_params).to(device)
 
 loss_fn = nn.CrossEntropyLoss()
 
-# dùng DigitsClassifier thì bật dòng dưới và tắt MLP
-from src.models.model import DigitsClassifier
-model = DigitsClassifier().to(device)  
+writer = SummaryWriter(log_dir="runs/my_experiment") #Tensor Board
 
-# dùng MLP thì bật dòng dưới và tắt DigitsClassifier
-# from src.models.model import MLP
-# model= MLP().to(device)
-
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 def checkDataLoader() -> None:
     print("Load data completed!!!")
@@ -81,9 +77,8 @@ def checkDataLoader() -> None:
     print (f"Using device: {device}")
     
 
-def train() -> None:     
+def train(model, optimizer) -> None:     
     print("<----Start Training----->")
-    writer = SummaryWriter(log_dir="runs/my_experiment") #Tensor Board
     
     for epoch in range(epochs):
         running_loss = 0.0
@@ -100,12 +95,10 @@ def train() -> None:
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            global_step = epoch * len(loaders['train']) + i
-            writer.add_scalar("Loss/train", loss.item(), global_step)
             running_loss += loss.item()
             if (i+1) % 100 == 0:
-                print(f"Epoch [{epoch + 1}/{epochs}], Step [{i+1}/{len(loaders['train'])}], Loss: {(running_loss / 100):.4f}")
-                running_loss = 0.0
+                print(f"Epoch [{epoch + 1}/{epochs}], Step [{i+1}/{len(loaders['train'])}], Loss: {loss.item():.4f}")
+        avg_train_loss = running_loss / len(loaders['train'])
         #Starting validation progress
         model.eval()
         val_loss = 0
@@ -147,22 +140,23 @@ def train() -> None:
 
 
         avg_val_loss = val_loss / total_val_steps
-        accuracy = 100 * correct / total
 
+        early_stopping(avg_val_loss, model)
 
-        
-        writer.add_scalar("Loss/validation", avg_val_loss, epoch)
-        # writer.add_scalar("Accuracy/validation", accuracy, epoch)
-        writer.add_scalar("Metrics/Precision", final_precision.item(), epoch)
-        writer.add_scalar("Metrics/Recall", final_recall.item(), epoch)
-        writer.add_scalar("Metrics/F1", final_f1.item(), epoch)
+        if early_stopping.early_stop:
+            print("Early stopping triggered")
+            break
+
+        writer.add_scalars('Loss', {
+        'train': avg_train_loss,
+        'val': avg_val_loss
+        }, epoch)
 
         print(f"End of Epoch {epoch+1} -> Avg Val Loss: {avg_val_loss:.4f}, F1: {final_f1.item():.4f}, Precision: {final_precision.item():.4f}, Recall: {final_recall.item():.4f}")
         print("--------------------------------------------------")
-    torch.save(model.state_dict(), "model.pth")
     writer.close()
 
-def test()-> None:
+def test(model)-> None:
     print("<---Begin Test Process--->")
     model.load_state_dict(torch.load("model.pth"))
     test_loss = 0.0
@@ -201,7 +195,7 @@ def test()-> None:
 
     print(f"Test Loss: {avg_test_loss}, Accuaracy: {test_acc}, F1: {final_f1.item():.4f}, Precision: {final_precision.item():.4f}, Recall: {final_recall.item():.4f}")
 
-def plot_confusion_matrix() -> None:
+def plot_confusion_matrix(model) -> None:
     print("<--- Plot Confusion Matrix (TEST SET) --->")
     with open('model.pth', 'rb') as f:
         model.load_state_dict(torch.load(f))
@@ -247,7 +241,7 @@ def plot_confusion_matrix() -> None:
 
 test_data = getDataTest(root_dir=config.data.root_dir)
 
-def run_test() -> None:
+def run_test(model) -> None:
     label = testImage()
     with open('model.pth', 'rb') as f: 
         model.load_state_dict(torch.load(f))  
@@ -270,10 +264,22 @@ def run_test() -> None:
     plt.show()
 if __name__ == '__main__':
     # checkDataLoader()
-    # train()
-    # test()
-    # plot_confusion_matrix()
-    run_test()
+    success = False
+    model = DigitsClassifier().to(device) #Default
+    while success != True:
+        choice = input("Type 1 to use MLP or 2 for CNN: ")
+        if int(choice)==1:
+            model = MLP().to(device)
+            success = True
+        elif int(choice)==2:
+            success =True
+        else:
+            print("Typo!")
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    train(model, optimizer)
+    test(model)
+    plot_confusion_matrix(model)
+    run_test(model)
     try:
         image, labels = next(iter(loaders['train']))
         print("\n---TEST DATLOADER---") #Data Loader test

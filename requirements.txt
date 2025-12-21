@@ -1,6 +1,8 @@
 torch==2.3.0
 numpy==1.26.4
-gradio
+seaborn
+tensorboard
+scikit-learn==1.7.2
 torchvision
 torchmetrics
 tqdm
