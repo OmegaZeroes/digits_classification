@@ -1,5 +1,4 @@
 import torch
-#from tqdm import tqdm
 import seaborn as sns 
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
@@ -13,6 +12,8 @@ import torch.optim as optim
 from save_samples import testImage
 from torchmetrics.classification import MulticlassPrecision, MulticlassRecall, MulticlassF1Score
 from src.models.model import MLP, DigitsClassifier, EarlyStopping
+from torchvision.datasets import MNIST
+
 config = OmegaConf.load("./configs/config.yaml")
 collator = DataCollator()
 train_dataset, val_dataset, test_dataset,total_size = getDataSet(config.data.root_dir)
@@ -241,6 +242,18 @@ def plot_confusion_matrix(model) -> None:
 
 test_data = getDataTest(root_dir=config.data.root_dir)
 
+test_dataset = MNIST(root=config.data.root_dir, train=False)
+def testImage() -> list:
+    result = []
+    for i, (image, label) in enumerate(test_dataset):
+        if i < 5:
+            image.save('{:1d}.jpg'.format(i))
+            result.append(label)
+        else:
+            break
+    return result
+
+
 def run_test(model) -> None:
     label = testImage()
     with open('model.pth', 'rb') as f: 
@@ -263,7 +276,7 @@ def run_test(model) -> None:
     plt.tight_layout()
     plt.show()
 if __name__ == '__main__':
-    # checkDataLoader()
+    checkDataLoader()
     success = False
     model = DigitsClassifier().to(device) #Default
     while success != True:
