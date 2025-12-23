@@ -34,12 +34,12 @@ micromamba create -n NAME python=3.10
 micromamba activate NAME
 ```
 
-### Bước 2: Cài requirement.txt
+### Bước 2: Cài requirements.txt
 
 Trong cùng một cái virtual environment, cd vào thư mục dự án và chạy:
 
 ``` bash
-pip install -r requirement.txt
+pip install -r requirements.txt
 ```
 
 ## Cách chạy huấn luyện và đánh giá mô hình
