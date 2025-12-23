@@ -9,7 +9,7 @@ from src.data.dataloader import getDataSet, DataCollator, getDataTest
 from omegaconf import  OmegaConf
 import torch.nn as nn
 import torch.optim as optim
-from save_samples import testImage
+
 from torchmetrics.classification import MulticlassPrecision, MulticlassRecall, MulticlassF1Score
 from src.models.model import MLP, DigitsClassifier, EarlyStopping
 from torchvision.datasets import MNIST
