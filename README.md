@@ -14,7 +14,7 @@
 <img width="1920" height="1080" alt="Tuần" src="https://github.com/user-attachments/assets/dac1a19b-11fb-4e9d-8a48-d997bbafeaa8" />
 
 ## Yêu cầu cài đặt (Requirements)
-Trước khi cài đặt dự án, bạn cần có một môi trường ảo sử dụng Python 3.10. Chúng tôi khuyến khích sử dụng **[microbamba](https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html)**
+Trước khi cài đặt dự án, bạn cần có một môi trường ảo sử dụng Python 3.10. Chúng tôi khuyến khích sử dụng **[microbamba](https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html)**.
 
 ## Hướng dẫn cài đặt (BẮT BUỘC)
 
